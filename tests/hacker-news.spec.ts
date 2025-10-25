@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { NewestPage } from '../pages/NewestPage';
 
-const articlesToValidate: number = parseInt(process.env.ARTICLE_COUNT || '100', 10);
+const articleCount: number = parseInt(process.env.ARTICLE_COUNT || '100', 10);
 
 test.describe('Feature: Hacker News Article Sorting', () => {
 
-  test(`Scenario: The first ${articlesToValidate} articles are sorted from newest to oldest`, async ({ page }) => {
+  test(`Scenario: The first ${articleCount} articles are sorted from newest to oldest`, async ({ page }) => {
     
     const newestPage = new NewestPage(page);
     let articleTimestamps: number[] = [];
@@ -14,8 +14,8 @@ test.describe('Feature: Hacker News Article Sorting', () => {
       await newestPage.goto();
     });
 
-    await test.step(`When I retrieve the timestamps of the first ${articlesToValidate} articles`, async () => {
-      articleTimestamps = await newestPage.getTimestampsForFirst(articlesToValidate);
+    await test.step(`When I retrieve the timestamps of the first ${articleCount} articles`, async () => {
+      articleTimestamps = await newestPage.getTimestampsForFirst(articleCount);
     });
 
     await test.step('Then the articles should be sorted in descending order of time', async () => {
@@ -23,10 +23,10 @@ test.describe('Feature: Hacker News Article Sorting', () => {
         const currentTime: number = articleTimestamps[i]; 
         const nextTime: number = articleTimestamps[i + 1];
         
-      expect(currentTime,`Article ${String(i).padStart(4,"0")} - Current time: ${currentTime} should be greater than or equal to nextTime: ${nextTime}`).toBeGreaterThanOrEqual(nextTime);
+      expect(currentTime,`Article ${String(i+1).padStart(4,"0")} - Current time: ${currentTime} should be greater than or equal to nextTime: ${nextTime}`).toBeGreaterThanOrEqual(nextTime);
       }
       
-      console.log(`Successfully validated that the first ${articlesToValidate} articles are sorted correctly.`);
+      console.log(`Successfully validated that the first ${articleCount} articles are sorted correctly.`);
     });
   });
 });
