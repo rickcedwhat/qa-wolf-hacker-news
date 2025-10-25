@@ -45,13 +45,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
+      - name: Install Playwright Dependencies
+        run: npx playwright install-deps
+
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
           if [ "${{ github.event.inputs.browser || 'all' }}" = "all" ]; then
-            npx playwright install --with-deps
+            npx playwright install
           else
-            npx playwright install --with-deps ${{ github.event.inputs.browser || 'all' }}
+            npx playwright install ${{ github.event.inputs.browser || 'all' }}
           fi
 
       - name: Run Playwright tests
