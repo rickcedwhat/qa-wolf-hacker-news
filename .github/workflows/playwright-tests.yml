@@ -1,0 +1,88 @@
+# Name of your workflow, which will appear in the GitHub Actions tab
+name: QA Wolf - Playwright Tests
+
+# --- Triggers ---
+on:
+  # 1. Automatically run on pushes to the 'main' branch
+  push:
+    branches: [ main ]
+  
+  # 2. Allow manual runs from the Actions tab
+  workflow_dispatch:
+    # --- Manual Inputs ---
+    inputs:
+      article_count:
+        description: 'Number of articles to validate'
+        required: true
+        default: '100'
+        type: string
+      browser:
+        description: 'Browser(s) to test on'
+        required: true
+        type: choice
+        options: [all, chromium, firefox, webkit] # 'all' will run on all 3 projects
+        default: 'all'
+
+jobs:
+  # A single job in this workflow
+  test:
+    # Set a timeout for the entire job
+    timeout-minutes: 15
+    # Run on the latest Ubuntu runner
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out your repository code
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Node.js 20 environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Cache npm dependencies
+
+      # Step 3: Install dependencies using 'npm ci' (safer for CI)
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Install Playwright browser binaries
+      - name: Install Playwright browsers
+        run: |
+          if [ "${{ github.event.inputs.browser }}" = "all" ]; then
+            # Install all browsers and dependencies if 'all' is selected
+            npx playwright install --with-deps
+          else
+            # Otherwise, just install the specific browser selected
+            npx playwright install --with-deps ${{ github.event.inputs.browser }}
+          fi
+
+      # Step 5: Run the Playwright tests
+      - name: Run Playwright tests
+        env:
+          # Pass the manual input as an environment variable to the test script
+          ARTICLE_COUNT: ${{ github.event.inputs.article_count }}
+        run: |
+          if [ "${{ github.event.inputs.browser }}" = "all" ]; then
+            # Run all projects (chromium, firefox, webkit)
+            npx playwright test
+          else
+            # Run only the selected project
+            npx playwright test --project=${{ github.event.inputs.browser }}
+          fi
+
+      # Step 6: Upload the HTML report as an artifact
+      # This step will run 'always()', even if the tests fail,
+      # so you can see the report for failed runs.
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Name of the artifact in GitHub
+          name: playwright-report-${{ github.run_id }}-${{ github.event.inputs.browser }}
+          # Directory to upload
+          path: playwright-report/
+          # How long to keep the artifact (e.g., 7 days)
+          retention-days: 7
+
