@@ -23,7 +23,7 @@ test.describe('Feature: Hacker News Article Sorting', () => {
         const currentTime: number = articleTimestamps[i]; 
         const nextTime: number = articleTimestamps[i + 1];
         
-      expect(currentTime,`Current time: ${currentTime} should be greater than or equal to nextTime: ${nextTime}`).toBeGreaterThanOrEqual(nextTime);
+      expect(currentTime,`Article ${String(i).padStart(4,"0")} - Current time: ${currentTime} should be greater than or equal to nextTime: ${nextTime}`).toBeGreaterThanOrEqual(nextTime);
       }
       
       console.log(`Successfully validated that the first ${articlesToValidate} articles are sorted correctly.`);
