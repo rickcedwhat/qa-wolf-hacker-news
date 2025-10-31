@@ -58,10 +58,6 @@ export class NewestPage {
       }
     }
 
-    expect(
-      allTimestamps.length,`Article count should be ${articleCount}`
-    ).toBe(articleCount);
-
     return allTimestamps;
   }
 

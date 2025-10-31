@@ -1,59 +1,179 @@
-# 🐺 QA Wolf Take Home Assignment
+# QA Wolf Take Home Assignment
 
-Welcome to the QA Wolf take home assignment for our [QA Engineer](https://www.task-wolf.com/apply-qae) role! We appreciate your interest and look forward to seeing what you come up with.
+This repository contains my submission for the QA Wolf take-home assignment. The goal was to create a script using Playwright to validate that the first 100 articles on Hacker News's "newest" page are sorted correctly. The project can be found on [GitHub](https://github.com/rickcedwhat/qa-wolf-hacker-news).
 
-## Instructions
+While the assignment requested a simple script to be run with `node index.js`, I have also included a more robust testing solution that leverages the full power of Playwright's test runner and incorporates CI/CD with GitHub Actions.
 
-This assignment has two questions as outlined below. When you are done, upload your assignment to our [application page](https://www.task-wolf.com/apply-qae):
+## Getting Started
 
+To get started, clone the repository and install the necessary dependencies.
 
-### Question 1
+```bash
+git clone https://github.com/rickcedwhat/qa-wolf-hacker-news.git
+cd qa-wolf-hacker-news
+npm install
+```
 
-In this assignment, you will create a script on [Hacker News](https://news.ycombinator.com/) using JavaScript and Microsoft's [Playwright](https://playwright.dev/) framework. 
+## Running the Tests
 
-1. Install node modules by running `npm i`.
+You can run the tests in two ways:
 
-2. Edit the `index.js` file in this project to go to [Hacker News/newest](https://news.ycombinator.com/newest) and validate that EXACTLY the first 100 articles are sorted from newest to oldest. You can run your script with the `node index.js` command.
+### 1\. Basic Script (as requested)
 
-Note that you are welcome to update Playwright or install other packages as you see fit, however you must utilize Playwright in this assignment.
+This command executes the simple script that logs the results to the console.
 
-### Question 2
+```bash
+node index.js
+```
 
-Why do you want to work at QA Wolf? Please record a short, ~2 min video using [Loom](https://www.loom.com/) that includes:
+### 2\. Robust Playwright Test Runner (Recommended)
 
-1. Your answer 
+This is a more powerful way to run the tests, offering detailed reports, tracing, and more. I highly recommend using this approach.
 
-2. A walk-through demonstration of your code, showing a successful execution
+```bash
+npm test
+```
 
-The answer and walkthrough should be combined into *one* video, and must be recorded using Loom as the submission page only accepts Loom links.
+After running the tests, you can view a detailed HTML report of the test execution:
 
-## Frequently Asked Questions
+```bash
+npm run report
+```
 
-### What is your hiring process? When will I hear about next steps?
+This will open a local web page in your browser with a full breakdown of the test run, including screenshots, videos, and a step-by-step trace of the actions Playwright performed. This provides much greater insight into the test execution and makes debugging significantly easier.
 
-This take home assignment is the first step in our hiring process, followed by a final round interview if it goes well. **We review every take home assignment submission and promise to get back to you either way within two weeks (usually sooner).** The only caveat is if we are out of the office, in which case we will get back to you when we return. If it has been more than two weeks and you have not heard from us, please do follow up.
+## Continuous Integration and Delivery (CI/CD)
 
-The final round interview is a 2-hour technical work session that reflects what it is like to work here. We provide a $150 stipend for your time for the final round interview regardless of how it goes. After that, there may be a short chat with our director about your experience and the role.
+I have also set up a CI/CD pipeline using **GitHub Actions**. This workflow automatically runs the Playwright tests on every push to the `main` branch.
 
-Our hiring process is rolling where we review candidates until we have filled our openings. If there are no openings left, we will keep your contact information on file and reach out when we are hiring again.
+The workflow is defined in `.github/workflows/playwright-tests.yml` and allows for manual triggering with customizable inputs, which is particularly useful for QA testers. You can specify:
 
-### Having trouble uploading your assignment?
-Be sure to delete your `node_modules` file, then zip your assignment folder prior to upload. 
+  * **Number of articles to validate**: `article_count` (default: 100)
+  * **Browser(s) to test on**: `browser` (options: `all`, `chromium`, `firefox`, `webkit`)
 
-### How do you decide who to hire?
+This provides a flexible and automated way to ensure the script's functionality and cross-browser compatibility. Upon completion, the workflow uploads the Playwright report as a build artifact for easy access and review.
 
-We evaluate candidates based on three criteria:
+## Code Walkthrough
 
-- Technical ability (as demonstrated in the take home and final round)
-- Customer service orientation (as this role is customer facing)
-- Alignment with our mission and values (captured [here](https://qawolf.notion.site/Mission-and-Values-859c7d0411ba41349e1b318f4e7abc8f))
+Here is a breakdown of the key files and logic in this project.
 
-This means whether we hire you is based on how you do during our interview process, not on your previous experience (or lack thereof). Note that you will also need to pass a background check to work here as our customers require this.
+### `tests/hacker-news.spec.ts`
 
-### How can I help my application stand out?
+This file contains the main test suite for this assignment. It follows the "Given-When-Then" structure for clarity and uses the `NewestPage` Page Object Model (POM) to interact with the Hacker News "newest" page.
 
-While the assignment has clear requirements, we encourage applicants to treat it as more than a checklist. If you're genuinely excited about QA Wolf, consider going a step further—whether that means building a simple user interface, adding detailed error handling or reporting, improving the structure of the script, or anything else that showcases your unique perspective.
+```typescript
+import { test, expect } from '@playwright/test';
+import { NewestPage } from '../pages/NewestPage';
 
-There's no "right" answer—we're curious to see what you choose to do when given freedom and ambiguity. In a world where tools can help generate working code quickly and make it easier than ever to complete technical take-homes, we value originality and intentionality. If that resonates with you, use this assignment as a chance to show us how you think.
+const articleCount: number = parseInt(process.env.ARTICLE_COUNT || '100', 10);
 
-Applicants who approach the assignment as a creative challenge, not just a checklist, tend to perform best in our process.
+test.describe('Feature: Hacker News Article Sorting', () => {
+
+  test(`Scenario: The first ${articleCount} articles are sorted from newest to oldest`, async ({ page }) => {
+    
+    const newestPage = new NewestPage(page);
+    let articleTimestamps: number[] = [];
+
+    await test.step('Given I am on the Hacker News "newest" page', async () => {
+      await newestPage.goto();
+    });
+
+    await test.step(`When I retrieve the timestamps of the first ${articleCount} articles`, async () => {
+      articleTimestamps = await newestPage.getTimestampsForFirst(articleCount);
+    });
+
+    await test.step('Then the articles should be sorted in descending order of time', async () => {
+      for (let i = 0; i < articleTimestamps.length - 1; i++) {
+        const currentTime: number = articleTimestamps[i]; 
+        const nextTime: number = articleTimestamps[i + 1];
+        
+      expect(currentTime,`Article ${String(i+1).padStart(4,"0")} - Current time: ${currentTime} should be greater than or equal to nextTime: ${nextTime}`).toBeGreaterThanOrEqual(nextTime);
+      }
+      
+      console.log(`Successfully validated that the first ${articleCount} articles are sorted correctly.`);
+    });
+  });
+});
+```
+
+The test is broken down into three main steps:
+
+1.  **Given**: The test navigates to the "newest" page on Hacker News.
+2.  **When**: It retrieves the timestamps of the specified number of articles. The number of articles is configurable via an environment variable, defaulting to 100.
+3.  **Then**: It iterates through the collected timestamps and asserts that each timestamp is greater than or equal to the next one, ensuring they are in descending order.
+
+### `pages/NewestPage.ts`
+
+This file implements the Page Object Model (POM) for the Hacker News "newest" page. This design pattern makes the test code cleaner, more readable, and easier to maintain by abstracting away the page-specific details from the test logic.
+
+```typescript
+import { expect, type Page, type Locator } from '@playwright/test';
+
+export class NewestPage {
+  readonly page: Page;
+  readonly moreLink: Locator;
+  readonly articleList: Locator;
+  readonly ageSpans: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.moreLink = page.locator('a.morelink');
+    this.articleList = page.locator('.athing');
+    this.ageSpans = page.locator('span.age');
+  }
+
+  /**
+   * Navigates to the "newest" page.
+   */
+  async goto(): Promise<void> {
+    await this.page.goto('https://news.ycombinator.com/newest');
+  }
+
+  /**
+   * Loads pages and scrapes timestamps in a loop until it
+   * has the desired number of articles.
+   * @param articleCount - The target number of timestamps to retrieve.
+   * @returns An array of numeric timestamps.
+   */
+  async getTimestampsForFirst(articleCount: number): Promise<number[]> {
+    const allTimestamps: number[] = [];
+
+    while (allTimestamps.length < articleCount) {
+      const elementsOnPage: Locator[] = await this.ageSpans.all();
+
+      for (const el of elementsOnPage) {
+        const timestampString: string | null = await el.getAttribute('title');
+
+        if (timestampString) {
+          const timestamp = parseInt(timestampString.split(' ')[1], 10);
+          allTimestamps.push(timestamp);
+        } else {
+          console.warn('Found an age element with no title attribute.');
+        }
+
+        if (allTimestamps.length === articleCount) {
+          break;
+        }
+      }
+
+      if (allTimestamps.length < articleCount) {
+        if (await this.moreLink.isVisible()) {
+          await this.moreLink.click();
+          await this.page.waitForLoadState('networkidle');
+        } else {
+          console.warn(`Could not find the 'More' link. Validating with the ${allTimestamps.length} articles found.`);
+          break;
+        }
+      }
+    }
+
+    return allTimestamps;
+  }
+}
+```
+
+Key features of this class include:
+
+  * **Locators**: It defines locators for the elements the test interacts with, such as the "more" link and the article age spans. This centralizes the selectors, so if the website's structure changes, you only need to update them in one place.
+  * **`goto()` method**: A simple method to navigate to the "newest" page.
+  * **`getTimestampsForFirst()` method**: This is the core of the page object. It retrieves the timestamps for a specified number of articles. It handles pagination by clicking the "more" link until the desired number of timestamps has been collected. It also includes error handling for cases where the "more" link might not be visible.
