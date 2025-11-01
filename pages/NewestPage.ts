@@ -3,14 +3,12 @@ import { expect, type Page, type Locator } from '@playwright/test';
 export class NewestPage {
   readonly page: Page;
   readonly moreLink: Locator;
-  readonly articleList: Locator;
   readonly ageSpans: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.moreLink = page.locator('a.morelink');
-    this.articleList = page.locator('.athing');
     this.ageSpans = page.locator('span.age');
+    this.moreLink = page.getByRole('link', { name: 'More', exact: true });
   }
 
   /**

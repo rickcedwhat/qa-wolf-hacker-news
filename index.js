@@ -18,7 +18,7 @@ async function sortHackerNewsArticles() {
   await page.goto("https://news.ycombinator.com/newest");
 
   // Locators based on your NewestPage.ts
-  const moreLink = page.locator('a.morelink');
+  const moreLink = page.getByRole('link', { name: 'More', exact: true });
   const ageSpans = page.locator('span.age');
   const articleCount = 100;
   const allTimestamps = [];

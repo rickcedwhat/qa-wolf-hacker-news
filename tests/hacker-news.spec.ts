@@ -14,11 +14,11 @@ test.describe('Feature: Hacker News Article Sorting', () => {
       await newestPage.goto();
     });
 
-    await test.step(`When I retrieve the timestamps of the first ${articleCount} articles`, async () => {
+    await test.step(`When I retrieve the timestamps for the first ${articleCount} articles`, async () => {
       articleTimestamps = await newestPage.getTimestampsForFirst(articleCount);
     });
 
-    await test.step('Then the articles should be sorted in descending order of time', async () => {
+    await test.step('Then the articles should be sorted in descending order by time', async () => {
       
       expect(articleTimestamps.length, `Article count should be ${articleCount}`).toBe(articleCount);
 
