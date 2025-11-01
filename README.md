@@ -51,6 +51,8 @@ The workflow is defined in `.github/workflows/playwright-tests.yml` and allows f
   * **Number of articles to validate**: `article_count` (default: 100)
   * **Browser(s) to test on**: `browser` (options: `all`, `chromium`, `firefox`, `webkit`)
 
+  ![alt text](public/image.png)
+
 This provides a flexible and automated way to ensure the script's functionality and cross-browser compatibility. Upon completion, the workflow uploads the Playwright report as a build artifact for easy access and review.
 
 ## Code Walkthrough
@@ -83,6 +85,9 @@ test.describe('Feature: Hacker News Article Sorting', () => {
     });
 
     await test.step('Then the articles should be sorted in descending order of time', async () => {
+
+    expect(articleTimestamps.length, `Article count should be ${articleCount}`).toBe(articleCount);
+        
       for (let i = 0; i < articleTimestamps.length - 1; i++) {
         const currentTime: number = articleTimestamps[i]; 
         const nextTime: number = articleTimestamps[i + 1];
